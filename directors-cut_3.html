@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YAN FARIAS — Orçamentos & Contratos</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* ——— MONUMENT EXTENDED (local files) ——— */
+@font-face {
+  font-family: 'Monument Extended';
+  src: url('/fonts/MonumentExtended-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Monument Extended';
+  src: url('/fonts/MonumentExtended-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root{
+  --bg:#08080a;
+  --bg-2:#0e0e11;
+  --line:#1f1f24;
+  --line-2:#2a2a30;
+  --text:#f5f5f4;
+  --muted:#86868b;
+  --muted-2:#5a5a60;
+  --red:#e50914;
+
+  --font-display:'Monument Extended','Inter',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--font-body);font-weight:300;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
+  background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.015) 1px, transparent 0);
+  background-size:3px 3px;mix-blend-mode:overlay;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:2;
+  background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%);
+}
+
+/* ——— HEADER ——— */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:22px 40px;border-bottom:1px solid var(--line);
+  background:rgba(8,8,10,.85);backdrop-filter:blur(12px);
+}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-mark{width:8px;height:8px;background:var(--red);border-radius:50%;box-shadow:0 0 12px var(--red);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.brand-name{font-family:var(--font-display);font-weight:700;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--text)}
+.brand-sub{font-family:var(--font-mono);font-size:9px;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin-top:2px}
+.topbar-meta{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;display:flex;gap:30px}
+.topbar-meta span b{color:var(--text);font-weight:500}
+
+/* ——— LAYOUT ——— */
+.stage{position:relative;z-index:3;max-width:1240px;margin:0 auto;padding:140px 40px 120px;min-height:100vh}
+
+/* ——— HERO ——— */
+.hero{margin-bottom:70px}
+.hero-kicker{font-family:var(--font-mono);font-size:11px;letter-spacing:.35em;color:var(--red);text-transform:uppercase;margin-bottom:26px;display:flex;align-items:center;gap:14px}
+.hero-kicker::before{content:"";width:40px;height:1px;background:var(--red)}
+.hero h1{font-family:var(--font-display);font-weight:700;font-size:clamp(38px,5.6vw,76px);line-height:1.02;letter-spacing:-.015em;text-transform:uppercase}
+.hero h1 .thin{font-weight:400;color:var(--muted);text-transform:uppercase}
+.hero h1 .accent{color:var(--text);font-weight:700}
+.hero-sub{margin-top:30px;max-width:560px;font-size:14px;line-height:1.7;color:var(--muted);letter-spacing:.01em}
+
+/* ——— PROGRESS ——— */
+.progress-wrap{margin:60px 0 50px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:26px 0}
+.progress-bar{position:relative;height:2px;background:var(--line-2);margin-bottom:24px}
+.progress-fill{position:absolute;top:0;left:0;height:100%;background:var(--red);transition:width .7s cubic-bezier(.22,1,.36,1);box-shadow:0 0 18px var(--red)}
+.steps-nav{display:flex;justify-content:space-between;gap:10px}
+.step-dot{flex:1;display:flex;flex-direction:column;gap:8px;cursor:pointer;padding:8px 2px;border-top:1px solid transparent;transition:all .3s}
+.step-dot:hover{border-top-color:var(--line-2)}
+.step-dot.active{border-top-color:var(--red)}
+.step-dot.done .step-num{color:var(--text)}
+.step-num{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;color:var(--muted-2)}
+.step-dot.active .step-num{color:var(--red)}
+.step-label{font-family:var(--font-display);font-weight:700;font-size:10px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase}
+.step-dot.active .step-label{color:var(--text)}
+
+/* ——— PANEL ——— */
+.panel{
+  background:linear-gradient(180deg,var(--bg-2) 0%,var(--bg) 100%);
+  border:1px solid var(--line);padding:60px 56px;position:relative;min-height:520px;
+}
+.panel::before{content:"";position:absolute;top:0;left:0;width:60px;height:1px;background:var(--red)}
+.panel::after{content:"";position:absolute;top:0;left:0;width:1px;height:60px;background:var(--red)}
+.panel-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:48px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+.panel-title{font-family:var(--font-display);font-weight:700;font-size:26px;letter-spacing:.02em;text-transform:uppercase}
+.panel-title .thin{font-weight:400;color:var(--muted)}
+.panel-index{font-family:var(--font-mono);font-size:10px;letter-spacing:.3em;color:var(--muted);text-transform:uppercase}
+
+/* ——— FORM ——— */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:30px 40px}
+.grid.three{grid-template-columns:repeat(3,1fr)}
+.field{display:flex;flex-direction:column;gap:12px}
+.field.full{grid-column:1/-1}
+label{font-family:var(--font-mono);font-size:10px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase}
+input[type=text],input[type=date],input[type=number],textarea,select{
+  background:transparent;border:none;border-bottom:1px solid var(--line-2);
+  color:var(--text);font-family:var(--font-body);font-size:16px;font-weight:300;
+  padding:10px 0 12px;outline:none;transition:border-color .3s;width:100%;letter-spacing:.005em;
+}
+input:focus,textarea:focus,select:focus{border-bottom-color:var(--red)}
+input::placeholder,textarea::placeholder{color:var(--muted-2)}
+textarea{resize:vertical;min-height:90px}
+select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2386868b' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center;padding-right:24px}
+select option{background:var(--bg-2);color:var(--text)}
+
+/* ——— PILLS ——— */
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{
+  padding:11px 20px;border:1px solid var(--line-2);background:transparent;
+  font-family:var(--font-display);font-weight:400;font-size:9px;letter-spacing:.18em;
+  color:var(--muted);text-transform:uppercase;cursor:pointer;transition:all .25s;
+}
+.pill:hover{border-color:var(--muted);color:var(--text)}
+.pill.active{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+
+/* ——— TOGGLE ——— */
+.toggle{display:flex;align-items:center;gap:14px;padding:6px 0;cursor:pointer;user-select:none}
+.toggle-track{width:42px;height:22px;border:1px solid var(--line-2);border-radius:20px;position:relative;transition:all .3s}
+.toggle-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;background:var(--muted);border-radius:50%;transition:all .3s}
+.toggle.on .toggle-track{border-color:var(--red);background:rgba(229,9,20,.15)}
+.toggle.on .toggle-knob{left:22px;background:var(--red);box-shadow:0 0 10px var(--red)}
+.toggle-label{font-family:var(--font-display);font-weight:400;font-size:10px;letter-spacing:.18em;color:var(--text);text-transform:uppercase}
+
+/* ——— BUTTONS ——— */
+.actions{display:flex;justify-content:space-between;margin-top:56px;padding-top:28px;border-top:1px solid var(--line)}
+.btn{
+  font-family:var(--font-display);font-weight:700;font-size:10px;letter-spacing:.22em;
+  text-transform:uppercase;padding:17px 32px;cursor:pointer;
+  background:transparent;border:1px solid var(--line-2);color:var(--text);
+  transition:all .3s;display:inline-flex;align-items:center;gap:12px;
+}
+.btn:hover{border-color:var(--text)}
+.btn.primary{background:var(--red);border-color:var(--red)}
+.btn.primary:hover{background:#fff;color:var(--red);border-color:#fff}
+.btn.ghost{border:none;color:var(--muted);font-weight:400}
+.btn.ghost:hover{color:var(--text)}
+.btn[disabled]{opacity:.25;pointer-events:none}
+
+/* ——— RESULTADO ——— */
+.result{display:grid;grid-template-columns:1.15fr .85fr;gap:60px;align-items:flex-start}
+.result-big{padding:50px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:30px}
+.result-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.3em;color:var(--red);text-transform:uppercase;margin-bottom:22px}
+.result-value{font-family:var(--font-display);font-weight:700;font-size:76px;line-height:.95;letter-spacing:-.02em}
+.result-value .currency{font-family:var(--font-display);font-weight:400;font-size:22px;color:var(--muted);vertical-align:super;margin-right:10px}
+.result-edit{display:flex;align-items:center;gap:14px;margin-top:26px}
+.result-edit input{font-size:20px;border-bottom:1px solid var(--red);max-width:260px}
+.breakdown{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+.breakdown-title{font-family:var(--font-display);font-weight:700;font-size:10px;letter-spacing:.28em;color:var(--text);text-transform:uppercase;margin-bottom:22px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.breakdown-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line)}
+.breakdown-row b{color:var(--text);font-weight:500}
+.breakdown-total{display:flex;justify-content:space-between;padding:16px 0 0;margin-top:12px;font-family:var(--font-display);font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text);border-top:1px solid var(--line-2)}
+.breakdown-total b{color:var(--red)}
+
+.download-row{display:flex;gap:16px;margin-top:40px;flex-wrap:wrap}
+.internal-note{margin-top:20px;font-family:var(--font-mono);font-size:10px;color:var(--muted-2);letter-spacing:.1em;text-transform:uppercase;max-width:480px;line-height:1.6}
+.internal-note::before{content:"⌘ ";color:var(--red)}
+
+.step{display:none;animation:fadeIn .6s cubic-bezier(.22,1,.36,1)}
+.step.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+footer{position:relative;z-index:3;text-align:center;padding:30px 20px 50px;font-family:var(--font-mono);font-size:9px;letter-spacing:.3em;color:var(--muted-2);text-transform:uppercase}
+
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--line-2)}
+::-webkit-scrollbar-thumb:hover{background:var(--red)}
+
+@media(max-width:900px){
+  .stage{padding:120px 20px 80px}
+  .panel{padding:40px 28px}
+  .grid,.grid.three{grid-template-columns:1fr}
+  .result{grid-template-columns:1fr;gap:40px}
+  .result-value{font-size:54px}
+  .topbar{padding:16px 20px}
+  .topbar-meta{display:none}
+  .steps-nav{overflow-x:auto}
+  .step-dot{min-width:90px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div>
+      <div class="brand-name">Yan Farias</div>
+      <div class="brand-sub">Audiovisual Studio · v2.0</div>
+    </div>
+  </div>
+  <div class="topbar-meta">
+    <span>STATUS <b>● LIVE</b></span>
+    <span>SESSION <b id="sessionId">—</b></span>
+    <span id="dateNow">—</span>
+  </div>
+</div>
+
+<main class="stage">
+
+  <section class="hero">
+    <div class="hero-kicker">Orçamento & Contrato · Audiovisual</div>
+    <h1>
+      O ROTEIRO<br>
+      <span class="thin">DO PREÇO</span> <span class="accent">JUSTO.</span>
+    </h1>
+    <p class="hero-sub">Ferramenta interna de precificação estratégica e geração automática de propostas. Preencha o briefing — o cálculo acontece em tempo real.</p>
+  </section>
+
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:14.28%"></div></div>
+    <div class="steps-nav" id="stepsNav"></div>
+  </div>
+
+  <div class="panel">
+
+    <div class="step active" data-step="1">
+      <div class="panel-head">
+        <div class="panel-title">INFORMAÇÕES <span class="thin">BÁSICAS</span></div>
+        <div class="panel-index">CHAPTER 01 / 07</div>
+      </div>
+      <div class="grid">
+        <div class="field"><label>Cliente</label><input type="text" id="f_client" placeholder="nome completo"></div>
+        <div class="field"><label>Empresa / Marca</label><input type="text" id="f_company" placeholder="razão social"></div>
+        <div class="field full"><label>Projeto</label><input type="text" id="f_project" placeholder="título do projeto"></div>
+        <div class="field"><label>Data de emissão</label><input type="date" id="f_date"></div>
+        <div class="field"><label>Prazo de entrega</label><input type="text" id="f_deadline" placeholder="a combinar com o cliente"></div>
+        <div class="field full">
+          <label>Tipo de cliente</label>
+          <div class="pills" data-group="clientType">
+            <div class="pill" data-val="pequeno">Pequeno</div>
+            <div class="pill" data-val="medio">Médio</div>
+            <div class="pill" data-val="agencia">Agência</div>
+            <div class="pill" data-val="premium">Premium</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-step="2">
+      <div class="panel-head">
+        <div class="panel-title">ESTRUTURA <span class="thin">DA ENTREGA</span></div>
+        <div class="panel-index">CHAPTER 02 / 07</div>
+      </div>
+      <div class="grid three">
+        <div class="field"><label>Qtd. de vídeos</label><input type="number" id="f_videos" value="1" min="1"></div>
+        <div class="field"><label>Minutagem total</label><input type="number" id="f_minutes" value="2" min="0" step="0.1"></div>
+        <div class="field">
+          <label>Formato</label>
+          <select id="f_format">
+            <option value="16:9">16:9 — Horizontal</option>
+            <option value="9:16">9:16 — Vertical</option>
+            <option value="multi">Múltiplos formatos</option>
+            <option value="1:1">1:1 — Quadrado</option>
+          </select>
+        </div>
+        <div class="field"><label>Versões adicionais</label><input type="number" id="f_versions" value="0" min="0"></div>
+        <div class="field"><label>Cortes extras</label><input type="number" id="f_extracuts" value="0" min="0"></div>
+        <div class="field"><label>Adaptações</label><input type="number" id="f_adapt" value="0" min="0"></div>
+      </div>
+    </div>
+
+    <div class="step" data-step="3">
+      <div class="panel-head">
+        <div class="panel-title">COMPLEXIDADE <span class="thin">CRIATIVA</span></div>
+        <div class="panel-index">CHAPTER 03 / 07</div>
+      </div>
+      <div class="grid">
+        <div class="field full">
+          <label>Dificuldade da referência</label>
+          <div class="pills" data-group="reference">
+            <div class="pill" data-val="baixa">Baixa</div>
+            <div class="pill" data-val="media">Média</div>
+            <div class="pill" data-val="alta">Alta</div>
+            <div class="pill" data-val="premium">Premium</div>
+          </div>
+        </div>
+        <div class="field full">
+          <label>Tipo de edição</label>
+          <div class="pills" data-group="complexity">
+            <div class="pill" data-val="simples">Simples</div>
+            <div class="pill" data-val="medio">Médio</div>
+            <div class="pill" data-val="avancado">Avançado</div>
+            <div class="pill" data-val="cinematografico">Cinematográfico</div>
+          </div>
+        </div>
+        <div class="field full">
+          <label>Estilo</label>
+          <div class="pills" data-group="style">
+            <div class="pill" data-val="cortes">Cortes secos</div>
+            <div class="pill" data-val="dinamica">Dinâmica</div>
+            <div class="pill" data-val="cinematografica">Transições cinematográficas</div>
+            <div class="pill" data-val="refinado">Refinado</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Sound Design</label>
+          <div class="pills" data-group="sound">
+            <div class="pill" data-val="nenhum">Nenhum</div>
+            <div class="pill" data-val="basico">Básico</div>
+            <div class="pill" data-val="medio">Médio</div>
+            <div class="pill" data-val="avancado">Avançado</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Motion</label>
+          <div class="pills" data-group="motion">
+            <div class="pill" data-val="none">Nenhum</div>
+            <div class="pill" data-val="simples">Simples</div>
+            <div class="pill" data-val="medio">Médio</div>
+            <div class="pill" data-val="avancado">Avançado</div>
+          </div>
+        </div>
+        <div class="field full">
+          <label>3D</label>
+          <div class="pills" data-group="threeD">
+            <div class="pill" data-val="none">Nenhum</div>
+            <div class="pill" data-val="leve">Leve</div>
+            <div class="pill" data-val="medio">Médio</div>
+            <div class="pill" data-val="avancado">Avançado</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-step="4">
+      <div class="panel-head">
+        <div class="panel-title">NARRATIVA <span class="thin">& VOZ</span></div>
+        <div class="panel-index">CHAPTER 04 / 07</div>
+      </div>
+      <div class="grid">
+        <div class="field full">
+          <div class="toggle" id="toggle_sonora">
+            <div class="toggle-track"><div class="toggle-knob"></div></div>
+            <div class="toggle-label">Possui sonora / depoimento</div>
+          </div>
+        </div>
+        <div class="field full">
+          <label>Tipo de narrativa</label>
+          <div class="pills" data-group="narrative">
+            <div class="pill" data-val="comSonora">Entrevista / Sonora</div>
+            <div class="pill" data-val="vozOff">Voz em off</div>
+            <div class="pill" data-val="broll">B-roll contínuo</div>
+            <div class="pill" data-val="hibrido">Híbrido</div>
+          </div>
+        </div>
+        <div class="field full">
+          <label>Observações narrativas</label>
+          <textarea id="f_narrativeNotes" placeholder="tom, ritmo, referências de voz..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-step="5">
+      <div class="panel-head">
+        <div class="panel-title">PRODUÇÃO <span class="thin">& CAPTAÇÃO</span></div>
+        <div class="panel-index">CHAPTER 05 / 07</div>
+      </div>
+      <div class="grid">
+        <div class="field full">
+          <div class="toggle" id="toggle_captacao">
+            <div class="toggle-track"><div class="toggle-knob"></div></div>
+            <div class="toggle-label">Inclui captação</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Nível de captação</label>
+          <select id="f_captacaoNivel">
+            <option value="basico">Básico</option>
+            <option value="intermediario">Intermediário</option>
+            <option value="avancado">Avançado</option>
+            <option value="cinematografico">Cinematográfico</option>
+          </select>
+        </div>
+        <div class="field"><label>Diárias</label><input type="number" id="f_diarias" value="0" min="0"></div>
+        <div class="field">
+          <label>Drone</label>
+          <select id="f_drone"><option value="nao">Não</option><option value="sim">Sim</option></select>
+        </div>
+        <div class="field">
+          <label>Áudio dedicado</label>
+          <select id="f_audio"><option value="nao">Não</option><option value="sim">Sim</option></select>
+        </div>
+        <div class="field"><label>Equipe extra (pessoas)</label><input type="number" id="f_crew" value="0" min="0"></div>
+        <div class="field"><label>Deslocamento (R$)</label><input type="number" id="f_travel" value="0" min="0"></div>
+      </div>
+    </div>
+
+    <div class="step" data-step="6">
+      <div class="panel-head">
+        <div class="panel-title">AJUSTES <span class="thin">COMERCIAIS</span></div>
+        <div class="panel-index">CHAPTER 06 / 07</div>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <div class="toggle" id="toggle_recorrente">
+            <div class="toggle-track"><div class="toggle-knob"></div></div>
+            <div class="toggle-label">Cliente recorrente</div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="toggle" id="toggle_portfolio">
+            <div class="toggle-track"><div class="toggle-knob"></div></div>
+            <div class="toggle-label">Alto potencial de portfólio</div>
+          </div>
+        </div>
+        <div class="field full">
+          <label>Urgência</label>
+          <div class="pills" data-group="urgency">
+            <div class="pill" data-val="normal">Normal</div>
+            <div class="pill" data-val="rapido">Rápido</div>
+            <div class="pill" data-val="urgente">Urgente</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Ajuste manual (R$, + ou –)</label>
+          <input type="number" id="f_manualAdjust" value="0" step="100">
+        </div>
+        <div class="field">
+          <label>Condições de pagamento</label>
+          <select id="f_payment">
+            <option value="50-50">50% início / 50% entrega</option>
+            <option value="30-70">30% início / 70% entrega</option>
+            <option value="100">100% na entrega</option>
+            <option value="100a">100% antecipado</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>Observações internas</label>
+          <textarea id="f_notes" placeholder="detalhes, expectativas, contexto..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-step="7">
+      <div class="panel-head">
+        <div class="panel-title">CORTE <span class="thin">FINAL</span></div>
+        <div class="panel-index">CHAPTER 07 / 07</div>
+      </div>
+      <div class="result">
+        <div>
+          <div class="result-big">
+            <div class="result-label">◆ Valor sugerido</div>
+            <div class="result-value"><span class="currency">R$</span><span id="resultValue">0</span></div>
+            <div class="result-edit">
+              <label style="margin:0">Editar:</label>
+              <input type="number" id="finalValue" placeholder="valor final">
+            </div>
+          </div>
+          <div class="download-row">
+            <button class="btn primary" id="btnPdfBudget">◈ Gerar Orçamento</button>
+            <button class="btn primary" id="btnPdfContract">◈ Gerar Contrato</button>
+            <button class="btn ghost" id="btnReset">↺ Novo projeto</button>
+          </div>
+          <div class="internal-note">
+            A decomposição abaixo é exclusivamente interna e nunca aparece no PDF enviado ao cliente. O orçamento final é apresentado como valor fechado.
+          </div>
+        </div>
+        <div class="breakdown">
+          <div class="breakdown-title">// Decomposição interna</div>
+          <div id="breakdownList"></div>
+          <div class="breakdown-total"><span>TOTAL</span><b id="breakdownTotal">R$ 0</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="btnPrev" disabled>← Voltar</button>
+      <button class="btn primary" id="btnNext">Avançar →</button>
+    </div>
+  </div>
+</main>
+
+<footer>◉ Yan Farias · Internal Pricing Tool · crafted for filmmakers</footer>
+
+<script>
+/* ============================================================
+   PRICING CONFIG — v2
+   Modelo: BASE + ADIÇÕES + MULTIPLICADOR LEVE (cliente)
+============================================================ */
+const pricing = {
+  basePrice: 1500,
+  pricePerMinute: 300,
+
+  complexity: { simples: 0, medio: 500, avancado: 1200, cinematografico: 2000 },
+  reference:  { baixa: 0, media: 300, alta: 700, premium: 1500 },
+  sound:      { nenhum: 0, basico: 200, medio: 500, avancado: 1000 },
+  motion:     { none: 0, simples: 300, medio: 700, avancado: 1200 },
+  threeD:     { none: 0, leve: 800, medio: 1500, avancado: 3000 },
+  narrative:  { comSonora: -200, vozOff: 300, broll: 500, hibrido: 0 },
+  urgency:    { normal: 0, rapido: 300, urgente: 1000 },
+  client:     { pequeno: 0.9, medio: 1.0, agencia: 1.2, premium: 1.5 },
+
+  // produção (adições fixas)
+  capture: { basico: 600, intermediario: 1200, avancado: 2200, cinematografico: 3500 },
+  dayRate: 900,
+  droneRate: 500,
+  audioRate: 400,
+  crewPerPerson: 350,
+
+  // entrega extras (adições fixas)
+  extraVersion: 250,
+  extraCut: 150,
+  adaptation: 120,
+
+  // comerciais
+  recurrentDiscount: 0.92,
+  portfolioDiscount: 0.95
+};
+
+/* ============================================================
+   STATE
+============================================================ */
+const state = {
+  step:1,
+  client:'',company:'',project:'',date:'',deadline:'',
+  clientType:'medio',
+  videos:1,minutes:2,format:'16:9',versions:0,extracuts:0,adapt:0,
+  reference:'media',complexity:'medio',style:'dinamica',
+  sound:'basico',motion:'simples',threeD:'none',
+  sonora:false,narrative:'hibrido',narrativeNotes:'',
+  captacao:false,captacaoNivel:'basico',diarias:0,drone:'nao',audio:'nao',crew:0,travel:0,
+  recorrente:false,portfolio:false,urgency:'normal',manualAdjust:0,payment:'50-50',notes:'',
+  finalValue:null
+};
+
+const STEP_LABELS = ['Básico','Entrega','Criativo','Narrativa','Produção','Comercial','Final'];
+
+/* ============================================================
+   INIT
+============================================================ */
+function init(){
+  document.getElementById('sessionId').textContent = '#'+Math.random().toString(36).slice(2,7).toUpperCase();
+  const d = new Date();
+  document.getElementById('dateNow').innerHTML = 'DATE <b>'+d.toLocaleDateString('pt-BR')+'</b>';
+  document.getElementById('f_date').value = d.toISOString().slice(0,10);
+  state.date = d.toISOString().slice(0,10);
+
+  buildStepsNav();
+
+  document.querySelectorAll('.pills').forEach(group=>{
+    const g = group.dataset.group;
+    group.querySelectorAll('.pill').forEach(p=>{
+      if(state[g]===p.dataset.val) p.classList.add('active');
+      p.addEventListener('click',()=>{
+        group.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+        p.classList.add('active');
+        state[g]=p.dataset.val;
+      });
+    });
+  });
+
+  const bind = (id,key,type='text')=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('input',()=>{
+      state[key] = type==='number' ? parseFloat(el.value)||0 : el.value;
+    });
+  };
+  bind('f_client','client');bind('f_company','company');bind('f_project','project');
+  bind('f_date','date');bind('f_deadline','deadline');
+  bind('f_videos','videos','number');bind('f_minutes','minutes','number');
+  bind('f_versions','versions','number');bind('f_extracuts','extracuts','number');
+  bind('f_adapt','adapt','number');
+  bind('f_narrativeNotes','narrativeNotes');bind('f_notes','notes');
+  bind('f_diarias','diarias','number');bind('f_crew','crew','number');bind('f_travel','travel','number');
+  bind('f_manualAdjust','manualAdjust','number');
+  document.getElementById('f_format').addEventListener('change',e=>state.format=e.target.value);
+  document.getElementById('f_captacaoNivel').addEventListener('change',e=>state.captacaoNivel=e.target.value);
+  document.getElementById('f_drone').addEventListener('change',e=>state.drone=e.target.value);
+  document.getElementById('f_audio').addEventListener('change',e=>state.audio=e.target.value);
+  document.getElementById('f_payment').addEventListener('change',e=>state.payment=e.target.value);
+
+  [['toggle_sonora','sonora'],['toggle_captacao','captacao'],['toggle_recorrente','recorrente'],['toggle_portfolio','portfolio']]
+    .forEach(([id,key])=>{
+      const el = document.getElementById(id);
+      el.addEventListener('click',()=>{
+        state[key]=!state[key];
+        el.classList.toggle('on',state[key]);
+      });
+    });
+
+  document.getElementById('btnNext').addEventListener('click',()=>goStep(state.step+1));
+  document.getElementById('btnPrev').addEventListener('click',()=>goStep(state.step-1));
+  document.getElementById('btnReset').addEventListener('click',()=>location.reload());
+  document.getElementById('finalValue').addEventListener('input',e=>{
+    state.finalValue = parseFloat(e.target.value)||null;
+    document.getElementById('resultValue').textContent = formatNumber(state.finalValue||computePrice().total);
+  });
+
+  document.getElementById('btnPdfBudget').addEventListener('click',generateBudgetPDF);
+  document.getElementById('btnPdfContract').addEventListener('click',generateContractPDF);
+}
+
+function buildStepsNav(){
+  const nav = document.getElementById('stepsNav');
+  nav.innerHTML='';
+  STEP_LABELS.forEach((label,i)=>{
+    const el = document.createElement('div');
+    el.className='step-dot'+(i+1===state.step?' active':'')+(i+1<state.step?' done':'');
+    el.innerHTML = `<div class="step-num">0${i+1}</div><div class="step-label">${label}</div>`;
+    el.addEventListener('click',()=>goStep(i+1));
+    nav.appendChild(el);
+  });
+}
+
+function goStep(n){
+  if(n<1||n>7) return;
+  state.step=n;
+  document.querySelectorAll('.step').forEach(el=>el.classList.remove('active'));
+  document.querySelector(`.step[data-step="${n}"]`).classList.add('active');
+  document.getElementById('progressFill').style.width = (n/7*100)+'%';
+  document.getElementById('btnPrev').disabled = n===1;
+  document.getElementById('btnNext').style.display = n===7?'none':'inline-flex';
+  buildStepsNav();
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(n===7) renderResult();
+}
+
+/* ============================================================
+   PRICE ENGINE — v2
+   final = (base + min*price + complexity + reference + sound
+            + motion + 3D + narrative + urgency + extras) * clientMult
+============================================================ */
+function computePrice(){
+  const s = state;
+  const breakdown = [];
+
+  const base = pricing.basePrice;
+  breakdown.push({label:'Base', val: base});
+
+  const byMin = pricing.pricePerMinute * (s.minutes||0) * (s.videos||1);
+  if(byMin>0) breakdown.push({label:`Minutagem (${s.minutes}min × ${s.videos})`, val: byMin});
+
+  const complexityAdd = pricing.complexity[s.complexity] || 0;
+  if(complexityAdd) breakdown.push({label:`Edição ${s.complexity}`, val: complexityAdd});
+
+  const referenceAdd = pricing.reference[s.reference] || 0;
+  if(referenceAdd) breakdown.push({label:`Referência ${s.reference}`, val: referenceAdd});
+
+  const soundAdd = pricing.sound[s.sound] || 0;
+  if(soundAdd) breakdown.push({label:`Sound design ${s.sound}`, val: soundAdd});
+
+  const motionAdd = pricing.motion[s.motion] || 0;
+  if(motionAdd) breakdown.push({label:`Motion ${s.motion}`, val: motionAdd});
+
+  const threeDAdd = pricing.threeD[s.threeD] || 0;
+  if(threeDAdd) breakdown.push({label:`3D ${s.threeD}`, val: threeDAdd});
+
+  // narrativa: toggle sonora tem prioridade (aplica -200)
+  let narrativeAdd;
+  if(s.sonora){
+    narrativeAdd = pricing.narrative.comSonora;
+    breakdown.push({label:`Narrativa com sonora`, val: narrativeAdd});
+  } else {
+    narrativeAdd = pricing.narrative[s.narrative] || 0;
+    if(narrativeAdd) breakdown.push({label:`Narrativa ${s.narrative}`, val: narrativeAdd});
+  }
+
+  const urgencyAdd = pricing.urgency[s.urgency] || 0;
+  if(urgencyAdd) breakdown.push({label:`Urgência ${s.urgency}`, val: urgencyAdd});
+
+  // extras de entrega
+  if(s.versions>0) breakdown.push({label:`${s.versions} versão(ões) extra`, val: pricing.extraVersion*s.versions});
+  if(s.extracuts>0) breakdown.push({label:`${s.extracuts} corte(s) extra`, val: pricing.extraCut*s.extracuts});
+  if(s.adapt>0) breakdown.push({label:`${s.adapt} adaptação(ões)`, val: pricing.adaptation*s.adapt});
+
+  // produção
+  if(s.captacao){
+    const cap = pricing.capture[s.captacaoNivel]||0;
+    if(cap) breakdown.push({label:`Captação ${s.captacaoNivel}`, val:cap});
+    if(s.diarias>0) breakdown.push({label:`${s.diarias} diária(s)`, val: pricing.dayRate*s.diarias});
+    if(s.drone==='sim') breakdown.push({label:'Drone', val: pricing.droneRate});
+    if(s.audio==='sim') breakdown.push({label:'Áudio dedicado', val: pricing.audioRate});
+    if(s.crew>0) breakdown.push({label:`${s.crew} equipe extra`, val: pricing.crewPerPerson*s.crew});
+    if(s.travel>0) breakdown.push({label:'Deslocamento', val: s.travel});
+  }
+
+  // subtotal
+  let subtotal = breakdown.reduce((a,b)=>a+b.val, 0);
+
+  // MULTIPLICADOR ÚNICO LEVE — cliente
+  const clientMult = pricing.client[s.clientType] || 1;
+  let multiplied = subtotal * clientMult;
+  if(clientMult !== 1){
+    breakdown.push({label:`Cliente ${s.clientType} ×${clientMult}`, val: multiplied - subtotal});
+  }
+
+  // comerciais por último
+  if(s.recorrente){
+    const d = multiplied*(pricing.recurrentDiscount-1);
+    breakdown.push({label:'Desconto recorrente', val: d});
+    multiplied += d;
+  }
+  if(s.portfolio){
+    const d = multiplied*(pricing.portfolioDiscount-1);
+    breakdown.push({label:'Desconto portfólio', val: d});
+    multiplied += d;
+  }
+  if(s.manualAdjust){
+    breakdown.push({label:'Ajuste manual', val: s.manualAdjust});
+    multiplied += s.manualAdjust;
+  }
+
+  const total = Math.max(0, Math.round(multiplied));
+  return { total, breakdown };
+}
+
+function renderResult(){
+  const {total,breakdown} = computePrice();
+  document.getElementById('resultValue').textContent = formatNumber(state.finalValue||total);
+  const list = document.getElementById('breakdownList');
+  list.innerHTML = breakdown.map(r=>`<div class="breakdown-row"><span>${r.label}</span><b>${r.val<0?'–':''}R$ ${formatNumber(Math.abs(Math.round(r.val)))}</b></div>`).join('');
+  document.getElementById('breakdownTotal').textContent = 'R$ '+formatNumber(total);
+  if(!document.getElementById('finalValue').value){
+    document.getElementById('finalValue').placeholder = formatNumber(total);
+  }
+}
+
+function formatNumber(n){return Number(n||0).toLocaleString('pt-BR',{maximumFractionDigits:0})}
+function formatMoney(n){return 'R$ '+formatNumber(n)}
+
+/* ============================================================
+   ESCOPO ESTRATÉGICO — linguagem elegante, não técnica
+============================================================ */
+function buildStrategicScope(){
+  const s = state;
+  const lines = [];
+
+  const vidWord = s.videos>1 ? `${s.videos} vídeos` : '1 vídeo';
+  const minTxt = s.minutes>0 ? ` com aproximadamente ${s.minutes} minuto${s.minutes>1?'s':''}` : '';
+  lines.push(`Produção de ${vidWord}${minTxt}`);
+
+  const editMap = {
+    simples: 'Edição com ritmo direto e montagem objetiva',
+    medio: 'Edição refinada com construção de storytelling',
+    avancado: 'Edição com linguagem autoral e narrativa elaborada',
+    cinematografico: 'Edição com linguagem cinematográfica e direção criativa apurada'
+  };
+  lines.push(editMap[s.complexity] || editMap.medio);
+
+  if(s.reference==='premium' || s.complexity==='cinematografico'){
+    lines.push('Tratamento de cor cinematográfico e finalização profissional');
+  } else {
+    lines.push('Tratamento de cor e finalização profissional');
+  }
+
+  if(s.sound!=='nenhum'){
+    lines.push('Sound design e construção sonora imersiva');
+  }
+
+  if(s.motion!=='none' && s.threeD!=='none'){
+    lines.push('Elementos gráficos em movimento e composições tridimensionais');
+  } else if(s.motion!=='none'){
+    lines.push('Elementos gráficos em movimento e composição visual');
+  } else if(s.threeD!=='none'){
+    lines.push('Composições tridimensionais integradas à narrativa');
+  }
+
+  if(s.sonora || s.narrative==='comSonora'){
+    lines.push('Construção narrativa a partir de sonoras e depoimentos');
+  } else if(s.narrative==='vozOff'){
+    lines.push('Roteiro e narração em voz off');
+  }
+
+  if(s.captacao){
+    const capMap = {
+      basico: 'Captação dedicada com equipamento profissional',
+      intermediario: 'Captação dedicada com direção de fotografia',
+      avancado: 'Captação cinematográfica com direção de fotografia apurada',
+      cinematografico: 'Captação cinematográfica de alto padrão com equipe completa'
+    };
+    lines.push(capMap[s.captacaoNivel] || capMap.basico);
+  }
+
+  if(s.versions>0 || s.extracuts>0 || s.adapt>0){
+    lines.push('Versões adicionais e adaptações para diferentes canais');
+  }
+
+  lines.push('Entrega final otimizada para plataforma');
+
+  return lines;
+}
+
+/* ============================================================
+   PDF — ORÇAMENTO (CLEAN, EDITORIAL, ESTRATÉGICO)
+============================================================ */
+const { jsPDF } = window.jspdf;
+
+const PAGE_W = 210;
+const PAGE_H = 297;
+const MARGIN = 22;
+
+function drawRule(doc, y, color=[220,220,220], width=0.2){
+  doc.setDrawColor(...color);
+  doc.setLineWidth(width);
+  doc.line(MARGIN, y, PAGE_W-MARGIN, y);
+}
+
+function generateBudgetPDF(){
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const {total} = computePrice();
+  const final = state.finalValue || total;
+  const d = new Date(state.date||Date.now());
+  const dateStr = d.toLocaleDateString('pt-BR');
+
+  // ——— HEADER ———
+  // accent mark
+  doc.setFillColor(229,9,20);
+  doc.rect(MARGIN, 20, 14, 0.6, 'F');
+
+  // brand left
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10);
+  doc.setTextColor(15,15,15);
+  doc.text('YAN FARIAS', MARGIN, 28);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(130,130,130);
+  doc.text('AUDIOVISUAL STUDIO', MARGIN, 32);
+
+  // doc label right
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(130,130,130);
+  doc.text('DOCUMENTO', PAGE_W-MARGIN, 24, {align:'right'});
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10);
+  doc.setTextColor(15,15,15);
+  doc.text('ORÇAMENTO', PAGE_W-MARGIN, 28, {align:'right'});
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(130,130,130);
+  doc.text(dateStr.toUpperCase(), PAGE_W-MARGIN, 32, {align:'right'});
+
+  drawRule(doc, 42, [30,30,30], 0.4);
+
+  // ——— PROJECT TITLE (editorial, grande) ———
+  let y = 68;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(229,9,20);
+  doc.text('— PROJETO', MARGIN, y);
+
+  y += 11;
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(26);
+  doc.setTextColor(15,15,15);
+  const projTitle = (state.project||'Projeto sem título').toUpperCase();
+  const projLines = doc.splitTextToSize(projTitle, PAGE_W - MARGIN*2);
+  doc.text(projLines, MARGIN, y);
+  y += projLines.length * 10;
+
+  // ——— INFO STRIP ———
+  y += 14;
+  drawRule(doc, y-6);
+
+  const infoCols = [
+    {label:'CLIENTE', value: (state.company || state.client || '—').toUpperCase()},
+    {label:'FORMATO', value: state.format.toUpperCase()},
+    {label:'PRAZO', value: (state.deadline || 'A COMBINAR').toUpperCase()}
+  ];
+  const colW = (PAGE_W - MARGIN*2) / infoCols.length;
+  infoCols.forEach((c,i)=>{
+    const x = MARGIN + colW*i;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(150,150,150);
+    doc.text(c.label, x, y);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.setTextColor(15,15,15);
+    const val = doc.splitTextToSize(c.value, colW-4);
+    doc.text(val, x, y+5);
+  });
+  y += 14;
+  drawRule(doc, y);
+
+  // ——— VALUE BLOCK (DESTAQUE) ———
+  y += 30;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(229,9,20);
+  doc.text('— INVESTIMENTO TOTAL', MARGIN, y);
+
+  y += 20;
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(52);
+  doc.setTextColor(15,15,15);
+  doc.text(formatMoney(final), MARGIN, y);
+
+  y += 9;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.setTextColor(130,130,130);
+  doc.text('valor fechado · projeto completo', MARGIN, y);
+
+  // ——— ESCOPO ———
+  y += 28;
+  drawRule(doc, y-8);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(229,9,20);
+  doc.text('— ESCOPO', MARGIN, y);
+
+  y += 11;
+  const scope = buildStrategicScope();
+  scope.forEach(line=>{
+    if(y > PAGE_H - 70){ doc.addPage(); y = 40; }
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.setTextColor(229,9,20);
+    doc.text('·', MARGIN, y);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(10);
+    doc.setTextColor(40,40,40);
+    const w = doc.splitTextToSize(line, PAGE_W - MARGIN*2 - 6);
+    doc.text(w, MARGIN+5, y);
+    y += w.length * 5.5 + 2.5;
+  });
+
+  // ——— CONDIÇÕES ———
+  y += 12;
+  if(y > PAGE_H - 80){ doc.addPage(); y = 40; }
+  drawRule(doc, y-8);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(229,9,20);
+  doc.text('— CONDIÇÕES', MARGIN, y);
+
+  y += 11;
+  const payMap = {
+    '50-50':'50% na aprovação · 50% na entrega',
+    '30-70':'30% na aprovação · 70% na entrega',
+    '100':'100% na entrega',
+    '100a':'100% antecipado'
+  };
+  const conditions = [
+    ['PAGAMENTO', payMap[state.payment]||state.payment],
+    ['PRAZO', 'A combinar com o cliente'],
+    ['REVISÕES', 'Até 2 rodadas inclusas por vídeo'],
+    ['VALIDADE', '15 dias a partir da emissão']
+  ];
+
+  conditions.forEach(([k,v])=>{
+    if(y > PAGE_H - 40){ doc.addPage(); y = 40; }
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(150,150,150);
+    doc.text(k, MARGIN, y);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(10);
+    doc.setTextColor(40,40,40);
+    doc.text(v, MARGIN+34, y);
+    y += 7.5;
+  });
+
+  // ——— FOOTER ———
+  const footerY = PAGE_H - 28;
+  drawRule(doc, footerY, [200,200,200], 0.3);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(15,15,15);
+  doc.text('YAN FARIAS', MARGIN, footerY+7);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(130,130,130);
+  doc.text('Audiovisual Studio · Direção criativa & pós-produção', MARGIN, footerY+12);
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(130,130,130);
+  doc.text('contato@yanfarias.com', PAGE_W-MARGIN, footerY+7, {align:'right'});
+  doc.text('@yanfarias', PAGE_W-MARGIN, footerY+12, {align:'right'});
+
+  doc.setFillColor(229,9,20);
+  doc.rect(MARGIN, PAGE_H-12, 14, 0.6, 'F');
+
+  doc.save(`orcamento_${(state.project||'projeto').replace(/\s+/g,'_')}.pdf`);
+}
+
+/* ============================================================
+   PDF — CONTRATO
+============================================================ */
+function generateContractPDF(){
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const {total} = computePrice();
+  const final = state.finalValue || total;
+  const d = new Date(state.date||Date.now());
+  const dateStr = d.toLocaleDateString('pt-BR');
+
+  // header
+  doc.setFillColor(229,9,20);
+  doc.rect(MARGIN, 20, 14, 0.6, 'F');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10);
+  doc.setTextColor(15,15,15);
+  doc.text('YAN FARIAS', MARGIN, 28);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(130,130,130);
+  doc.text('AUDIOVISUAL STUDIO', MARGIN, 32);
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(130,130,130);
+  doc.text('DOCUMENTO', PAGE_W-MARGIN, 24, {align:'right'});
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10);
+  doc.setTextColor(15,15,15);
+  doc.text('CONTRATO', PAGE_W-MARGIN, 28, {align:'right'});
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(130,130,130);
+  doc.text(dateStr.toUpperCase(), PAGE_W-MARGIN, 32, {align:'right'});
+
+  drawRule(doc, 42, [30,30,30], 0.4);
+
+  let y = 58;
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(18);
+  doc.setTextColor(15,15,15);
+  doc.text('CONTRATO DE PRESTAÇÃO', MARGIN, y);
+  y += 7;
+  doc.text('DE SERVIÇOS AUDIOVISUAIS', MARGIN, y);
+  y += 14;
+
+  const payMap = {
+    '50-50':'50% na assinatura e 50% na entrega',
+    '30-70':'30% na assinatura e 70% na entrega',
+    '100':'100% na entrega',
+    '100a':'100% antecipado'
+  };
+
+  const clauses = [
+    {t:'PARTES', b:`Pelo presente instrumento particular, de um lado CONTRATANTE: ${state.client||'[NOME]'}, representando ${state.company||'[EMPRESA]'}, doravante denominado CONTRATANTE, e de outro lado YAN FARIAS — Audiovisual Studio, doravante denominado CONTRATADO, firmam o presente contrato.`},
+    {t:'CLÁUSULA 1ª — OBJETO', b:`O presente contrato tem por objeto a prestação de serviços de produção audiovisual para o projeto "${state.project||'[PROJETO]'}", compreendendo ${state.videos} vídeo(s) com duração total aproximada de ${state.minutes} minutos, no formato ${state.format}, incluindo direção criativa, edição, finalização e entrega nos padrões acordados.`},
+    {t:'CLÁUSULA 2ª — VALOR E PAGAMENTO', b:`O valor total dos serviços é de ${formatMoney(final)} (${formatNumber(final)} reais), a ser pago da seguinte forma: ${payMap[state.payment]||state.payment}. Os pagamentos serão realizados via transferência bancária ou PIX em até 3 dias úteis após emissão da cobrança.`},
+    {t:'CLÁUSULA 3ª — PRAZO DE ENTREGA', b:`O CONTRATADO se compromete a entregar o projeto no prazo de ${state.deadline||'a combinar entre as partes'}, contados a partir do recebimento de todo o material necessário e do primeiro pagamento. Atrasos causados pelo CONTRATANTE estendem o prazo na mesma proporção.`},
+    {t:'CLÁUSULA 4ª — REVISÕES', b:`Estão incluídas até 2 (duas) rodadas de revisão por vídeo entregue. Revisões adicionais, bem como mudanças estruturais de escopo após aprovação de versão, serão cobradas à parte mediante novo orçamento.`},
+    {t:'CLÁUSULA 5ª — DIREITOS AUTORAIS', b:`Após quitação integral do valor contratado, o CONTRATANTE obterá os direitos de uso do material entregue para os fins acordados. O CONTRATADO mantém o direito de utilizar o material em seu portfólio profissional e para fins promocionais, salvo acordo expresso em contrário.`},
+    {t:'CLÁUSULA 6ª — RESCISÃO', b:`Em caso de rescisão por iniciativa do CONTRATANTE após início dos trabalhos, os valores já pagos não serão restituídos. Se rescindido pelo CONTRATADO sem justa causa, valores pagos por etapas não executadas serão restituídos proporcionalmente.`},
+    {t:'CLÁUSULA 7ª — DISPOSIÇÕES GERAIS', b:`As partes elegem o foro da comarca do CONTRATADO para dirimir eventuais questões. Alterações apenas por aditivo escrito e assinado por ambas as partes.${state.notes?' Observações: '+state.notes:''}`}
+  ];
+
+  clauses.forEach(c=>{
+    if(y > PAGE_H-50){ doc.addPage(); y=40; }
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.setTextColor(229,9,20);
+    doc.text(c.t, MARGIN, y);
+    y += 5;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(50,50,50);
+    const lines = doc.splitTextToSize(c.b, PAGE_W - MARGIN*2);
+    lines.forEach(line=>{
+      if(y > PAGE_H-30){ doc.addPage(); y=40; }
+      doc.text(line, MARGIN, y);
+      y += 4.8;
+    });
+    y += 5;
+  });
+
+  if(y > PAGE_H-60){ doc.addPage(); y=60; }
+  y += 10;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.setTextColor(80,80,80);
+  doc.text(`Local e data: _________________________, ${dateStr}`, MARGIN, y);
+  y += 22;
+  doc.setDrawColor(50,50,50);
+  doc.line(MARGIN+5, y, MARGIN+75, y);
+  doc.line(MARGIN+105, y, MARGIN+175, y);
+  y += 5;
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(15,15,15);
+  doc.text('CONTRATANTE', MARGIN+40, y, {align:'center'});
+  doc.text('CONTRATADO', MARGIN+140, y, {align:'center'});
+  y += 4;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(130,130,130);
+  doc.text(state.client||'—', MARGIN+40, y, {align:'center'});
+  doc.text('Yan Farias', MARGIN+140, y, {align:'center'});
+
+  doc.save(`contrato_${(state.project||'projeto').replace(/\s+/g,'_')}.pdf`);
+}
+
+init();
+</script>
+</body>
+</html>
